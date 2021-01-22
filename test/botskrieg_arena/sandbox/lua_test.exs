@@ -1,7 +1,21 @@
 defmodule BotskriegArena.Sandbox.LuaTest do
   use ExUnit.Case, async: true
-
   alias BotskriegArena.Sandbox.Lua
+
+  @infinite_lua_loop """
+  while true do
+    foo = 1 + 1
+  end
+  """
+
+  @run_out_of_memory_lua_script """
+  i = 0
+  some_table = {}
+  while true do
+    i = i + 1
+    some_table[i] = i
+  end
+  """
 
   test "You can make a new one" do
     assert %Lua.State{} = Lua.init()
@@ -13,9 +27,36 @@ defmodule BotskriegArena.Sandbox.LuaTest do
       assert {[2.0], _} = Lua.run(state, "return 1 + 1")
     end
 
-    test "It can't run sandboxed things" do
+    test "it can't run sandboxed things" do
       state = Lua.init()
       assert {:error, _} = Lua.run(state, "return os.getenv(\"HOME\")")
+    end
+
+    test "You can set the max heap size" do
+      state = Lua.init()
+      # As of Jan 21 2021 there isn't a way to detect if a timeout is from running
+      # out of memory or from running out of time, it does blow up when it
+      # runs out of memory on the heap though!
+      assert {:error, %Lua.State{lua_state: :timeout}} =
+               Lua.run(state, @run_out_of_memory_lua_script, %{
+                 max_reductions: 0,
+                 max_heap_size: 1000,
+                 timeout: 100
+               })
+    end
+
+    test "you can exhaust your reductions" do
+      state = Lua.init()
+
+      assert {:error, %Lua.State{lua_state: {:reductions, _}}} =
+               Lua.run(state, @infinite_lua_loop, %{max_reductions: 100})
+    end
+
+    test "you can set the timeout" do
+      state = Lua.init()
+
+      assert {:error, %Lua.State{lua_state: :timeout}} ==
+               Lua.run(state, @infinite_lua_loop, %{timeout: 1, max_reductions: 0})
     end
   end
 
