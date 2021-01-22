@@ -1,4 +1,4 @@
-defmodule BotskriegArena.Sandbox.Lua do
+defmodule BotskriegArena.Lua do
   defmodule State do
     defstruct [:lua_state]
   end
@@ -27,8 +27,8 @@ defmodule BotskriegArena.Sandbox.Lua do
     %State{lua_state: :luerl_sandbox.init()}
   end
 
-  @spec run(%State{}, code(), map) :: {any(), %State{}}
-  def run(%State{lua_state: lua_state} = state, code, opts \\ %{}) do
+  @spec run_sandboxed(%State{}, code(), map) :: {any(), %State{}}
+  def run_sandboxed(%State{lua_state: lua_state} = state, code, opts \\ %{}) do
     flags =
       @default_sandbox
       |> Map.merge(opts)

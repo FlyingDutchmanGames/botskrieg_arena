@@ -1,6 +1,6 @@
-defmodule BotskriegArena.Sandbox.LuaTest do
+defmodule BotskriegArena.LuaTest do
   use ExUnit.Case, async: true
-  alias BotskriegArena.Sandbox.Lua
+  alias BotskriegArena.Lua
 
   @infinite_lua_loop """
   while true do
@@ -21,15 +21,15 @@ defmodule BotskriegArena.Sandbox.LuaTest do
     assert %Lua.State{} = Lua.init()
   end
 
-  describe "run" do
+  describe "run_sandboxed" do
     test "you can run some lua code in the sandbox" do
       state = Lua.init()
-      assert {[2.0], _} = Lua.run(state, "return 1 + 1")
+      assert {[2.0], _} = Lua.run_sandboxed(state, "return 1 + 1")
     end
 
     test "it can't run sandboxed things" do
       state = Lua.init()
-      assert {:error, _} = Lua.run(state, "return os.getenv(\"HOME\")")
+      assert {:error, _} = Lua.run_sandboxed(state, "return os.getenv(\"HOME\")")
     end
 
     test "You can set the max heap size" do
@@ -38,7 +38,7 @@ defmodule BotskriegArena.Sandbox.LuaTest do
       # out of memory or from running out of time, it does blow up when it
       # runs out of memory on the heap though!
       assert {:error, %Lua.State{lua_state: :timeout}} =
-               Lua.run(state, @run_out_of_memory_lua_script, %{
+               Lua.run_sandboxed(state, @run_out_of_memory_lua_script, %{
                  max_reductions: 0,
                  max_heap_size: 1000,
                  timeout: 100
@@ -49,14 +49,14 @@ defmodule BotskriegArena.Sandbox.LuaTest do
       state = Lua.init()
 
       assert {:error, %Lua.State{lua_state: {:reductions, _}}} =
-               Lua.run(state, @infinite_lua_loop, %{max_reductions: 100})
+               Lua.run_sandboxed(state, @infinite_lua_loop, %{max_reductions: 100})
     end
 
     test "you can set the timeout" do
       state = Lua.init()
 
       assert {:error, %Lua.State{lua_state: :timeout}} ==
-               Lua.run(state, @infinite_lua_loop, %{timeout: 1, max_reductions: 0})
+               Lua.run_sandboxed(state, @infinite_lua_loop, %{timeout: 1, max_reductions: 0})
     end
   end
 
@@ -78,7 +78,7 @@ defmodule BotskriegArena.Sandbox.LuaTest do
       assert {[{"b", "c"}, {"d", "e"}], state} = Lua.read_from_table(state, ["a"])
       assert {"c", state} = Lua.read_from_table(state, ["a", "b"])
 
-      {[], state} = Lua.run(state, "hello_table = { hello=\"world\" };")
+      {[], state} = Lua.run_sandboxed(state, "hello_table = { hello=\"world\" };")
       assert {"world", _state} = Lua.read_from_table(state, ["hello_table", "hello"])
     end
   end
