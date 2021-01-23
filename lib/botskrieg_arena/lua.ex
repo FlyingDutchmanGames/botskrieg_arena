@@ -49,16 +49,17 @@ defmodule BotskriegArena.Lua do
       |> update_in([:max_heap_size], &%{size: &1, kill: false, error_logger: false})
       |> Enum.into([])
 
-    {result, new_state} =
-      :luerl_sandbox.run(
-        code,
-        lua_state,
-        flags[:max_reductions],
-        Keyword.take(flags, [:priority, :max_heap_size]),
-        flags[:timeout]
-      )
-
-    {result, %State{state | lua_state: new_state}}
+    :luerl_sandbox.run(
+      code,
+      lua_state,
+      flags[:max_reductions],
+      Keyword.take(flags, [:priority, :max_heap_size]),
+      flags[:timeout]
+    )
+    |> case do
+      {:error, _} = err -> err
+      {result, new_lua_state} -> {result, %State{state | lua_state: new_lua_state}}
+    end
   end
 
   @spec set_on_table(%State{}, table_path(), any()) :: %State{}
