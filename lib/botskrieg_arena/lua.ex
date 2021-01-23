@@ -3,7 +3,9 @@ defmodule BotskriegArena.Lua do
     defstruct [:lua_state]
   end
 
-  @type code :: String.t()
+  @type source_code :: String.t()
+  @type compiled_code :: term()
+  @type compilation_failure :: {:error, term(), term()}
   @type table_path :: [String.t(), ...]
 
   # 1 Mbit in machine words
@@ -22,12 +24,24 @@ defmodule BotskriegArena.Lua do
     max_heap_size: @default_max_heap_size
   }
 
-  @spec init() :: %State{}
-  def init do
+  @spec init_sandboxed :: %State{}
+  def init_sandboxed do
     %State{lua_state: :luerl_sandbox.init()}
   end
 
-  @spec run_sandboxed(%State{}, code(), map) :: {any(), %State{}}
+  @spec compile(source_code, %State{}) ::
+          {:ok, compiled_code(), %State{}} | compilation_failure()
+  def compile(source_code, %State{lua_state: lua_state}) do
+    case :luerl.load(source_code, lua_state) do
+      {:ok, compiled_code, state} ->
+        {:ok, compiled_code, %State{state | lua_state: state}}
+
+      {:error, _, _} = err ->
+        err
+    end
+  end
+
+  @spec run_sandboxed(%State{}, source_code(), map) :: {any(), %State{}}
   def run_sandboxed(%State{lua_state: lua_state} = state, code, opts \\ %{}) do
     flags =
       @default_sandbox
