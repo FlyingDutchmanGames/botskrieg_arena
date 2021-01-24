@@ -21,6 +21,14 @@ defmodule BotskriegArena.LuaTest do
     assert %Lua.State{} = Lua.init_sandboxed()
   end
 
+  describe "compile/2" do
+    test "invalid source code yields and error" do
+      game = Lua.init_sandboxed()
+      assert {:ok, chunk, %Lua.State{} = state} = Lua.compile("return \"foo\";", game)
+      assert {["foo"], _state} = Lua.run_sandboxed(state, chunk)
+    end
+  end
+
   describe "run_sandboxed" do
     test "you can run some lua code in the sandbox" do
       state = Lua.init_sandboxed()

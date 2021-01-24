@@ -31,10 +31,10 @@ defmodule BotskriegArena.Lua do
 
   @spec compile(source_code, %State{}) ::
           {:ok, compiled_code(), %State{}} | compilation_failure()
-  def compile(source_code, %State{lua_state: lua_state}) do
+  def compile(source_code, %State{lua_state: lua_state} = state) do
     case :luerl.load(source_code, lua_state) do
-      {:ok, compiled_code, state} ->
-        {:ok, compiled_code, %State{state | lua_state: state}}
+      {:ok, compiled_code, lua_state} ->
+        {:ok, compiled_code, %State{state | lua_state: lua_state}}
 
       {:error, _, _} = err ->
         err

@@ -33,9 +33,9 @@ defmodule BotskriegArena.Lua.Games.TicTacToeTest do
     end
   end
 
-  describe "apply!" do
+  describe "apply" do
     test "works with a valid move", %{game: game} do
-      assert {:ok, game} = LuaGame.apply!(game, :x, {0, 0})
+      assert {:ok, game} = LuaGame.apply(game, :x, {0, 0})
 
       assert %{
                "game" => %{
